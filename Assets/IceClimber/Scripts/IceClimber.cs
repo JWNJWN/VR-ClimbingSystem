@@ -20,12 +20,15 @@
 
         private void Awake()
         {
-            playArea = VRTK_DeviceFinder.PlayAreaTransform();
-            bodyPhysics = GetComponent<VRTK_BodyPhysics>();
+            VRTK_SDKManager.instance.AddBehaviourToToggleOnLoadedSetupChange(this);
+
         }
 
         private void OnEnable()
         {
+            playArea = VRTK_DeviceFinder.PlayAreaTransform();
+            bodyPhysics = GetComponent<VRTK_BodyPhysics>();
+
             InitListeners(true);
         }
 
@@ -45,19 +48,25 @@
 
             isClimbing = true;
 
-            controllers.Add(controller);
-            controllerStartLocations.Add(controller, GetPosition(controller.transform));
-            playAreaStartLocations.Add(controller, playArea.position);
+            if (!controllers.Contains(controller))
+            {
+                controllers.Add(controller);
+                controllerStartLocations.Add(controller, GetPosition(controller.transform));
+                playAreaStartLocations.Add(controller, playArea.position);
+            }
         }
 
         private void HangEnd(object sender)
         {
-            IcePick IP = (IcePick)sender;
-            var controller = VRTK_DeviceFinder.GetActualController(IP.GetGrabbingObject());
+            ICHangableObject hangableObject = (ICHangableObject)sender;
+            var controller = VRTK_DeviceFinder.GetActualController(hangableObject.GetGrabbingObject());
 
-            controllers.Remove(controller);
-            controllerStartLocations.Remove(controller);
-            playAreaStartLocations.Remove(controller);
+            if (controllers.Contains(controller))
+            {
+                controllers.Remove(controller);
+                controllerStartLocations.Remove(controller);
+                playAreaStartLocations.Remove(controller);
+            }
 
             if (controllers.Count == 0)
             {
@@ -96,6 +105,11 @@
                 IP.OnHangStart += new HangEventHandler(HangStart);
                 IP.OnHangEnd += new HangEventHandler(HangEnd);
             }
+        }
+
+        private void OnDestroy()
+        {
+            VRTK_SDKManager.instance.RemoveBehaviourToToggleOnLoadedSetupChange(this);
         }
     }
 }

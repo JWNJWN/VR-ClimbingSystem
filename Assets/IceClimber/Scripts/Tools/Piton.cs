@@ -14,13 +14,13 @@
             playerPhysics = FindObjectOfType<VRTK_BodyPhysics>();
         }
 
-        protected override void HangStart(object sender)
+        public override void HangStart(object sender)
         {
             base.HangStart(this);
             TetherPlayer(true);
         }
 
-        protected override void HangEnd(object sender)
+        public override void HangEnd(object sender)
         {
             base.HangEnd(this);
             TetherPlayer(false);

@@ -1,5 +1,6 @@
 ﻿namespace IceClimber.Base
 {
+    using System.Collections.Generic;
     using UnityEngine;
     using VRTK;
 
@@ -10,13 +11,18 @@
         public event HangEventHandler OnHangStart;
         public event HangEventHandler OnHangEnd;
         
-        public bool isInsideWall;
+        public bool IsInsideWall
+        {
+            get { return EnteredMaterials.Count > 0; }
+        }
 
-        public Transform hangPoint;
+        public Transform HangPoint;
 
         protected Vector3 velocity;
         private Vector3 previousPosition;
-        
+
+        public List<ICHangableMaterial> EnteredMaterials;
+
         protected virtual float velocityForce
         {
             get { return (velocity.magnitude * interactableRigidbody.mass) / Time.fixedDeltaTime; }
@@ -25,13 +31,8 @@
         protected override void Awake()
         {
             base.Awake();
-            OnHangStart += new HangEventHandler(HangStart);
-            OnHangEnd += new HangEventHandler(HangEnd);
-        }
 
-        public override void Grabbed(VRTK_InteractGrab currentGrabbingObject = null)
-        {
-            base.Grabbed(currentGrabbingObject);
+            EnteredMaterials = new List<ICHangableMaterial>();
         }
 
         public override void Ungrabbed(VRTK_InteractGrab previousGrabbingObject = null)
@@ -42,43 +43,58 @@
 
         protected virtual void OnTriggerEnter(Collider collider)
         {
-            if(IsGrabbed() && !isInsideWall)
+            if(IsGrabbed() && !IsInsideWall)
             {
                 ICHangableMaterial mat = collider.GetComponent<ICHangableMaterial>();
-                if (mat != null && velocityForce >= mat.EnterForce)
+                if (mat != null && velocityForce >= mat.EnterSpeed)
                 {
-                    OnHangStart(this);
+                    if (!EnteredMaterials.Contains(mat))
+                    {
+                        EnteredMaterials.Add(mat);
+                        HangStart(this);
+                    }
                 }
             }
         }   
 
         protected virtual void OnTriggerExit(Collider collider)
         {
-            if(IsGrabbed() && isInsideWall)
+            if(IsGrabbed() && IsInsideWall)
             {
                 ICHangableMaterial mat = collider.GetComponent<ICHangableMaterial>();
-                if (mat != null && velocityForce >= mat.ExitForce)
-                    OnHangEnd(this);
+                if (mat != null)
+                {
+                    if (EnteredMaterials.Contains(mat))
+                    {
+                        EnteredMaterials.Remove(mat);
+                        HangEnd(this);
+                    }
+                }
             }
         }
 
-        protected virtual void HangStart(object sender)
+        public virtual void HangStart(object sender)
         {
-            isInsideWall = true;
+            OnHangStart(sender);
         }
-        protected virtual void HangEnd(object sender)
+        public virtual void HangEnd(object sender)
         {
-            isInsideWall = false;
+            OnHangEnd(sender);
         }
-
 
         protected override void FixedUpdate()
         {
             base.FixedUpdate();
-            if(hangPoint)
+
+            if (IsInsideWall)
+                interactableRigidbody.detectCollisions = false;
+            else
+                interactableRigidbody.detectCollisions = true;
+
+            if(HangPoint)
             {
-                velocity = hangPoint.position - previousPosition;
-                previousPosition = hangPoint.position;
+                velocity = HangPoint.position - previousPosition;
+                previousPosition = HangPoint.position;
             }
             else
             {

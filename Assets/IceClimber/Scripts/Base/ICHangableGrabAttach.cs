@@ -50,7 +50,7 @@
         {
             base.ProcessFixedUpdate();
 
-            grabbedObjectRigidBody.useGravity = !((ICHangableObject)grabbedObjectScript).isInsideWall;
+            grabbedObjectRigidBody.useGravity = !((ICHangableObject)grabbedObjectScript).IsInsideWall;
 
             float maxDistanceDelta = 10f;
             float angle;
@@ -77,14 +77,14 @@
             if (angle != 0)
             {
                 Vector3 angularTarget = angle * axis;
-                if (GrabbedObjectScript.isInsideWall)
+                if (GrabbedObjectScript.IsInsideWall)
                     angularTarget = transform.TransformVector(RestrictRotation(transform.InverseTransformVector(angularTarget)));
 
                 grabbedObjectRigidBody.angularVelocity = Vector3.MoveTowards(grabbedObjectRigidBody.angularVelocity, angularTarget, maxDistanceDelta);
             }
 
             Vector3 velocityTarget = positionDelta / Time.fixedDeltaTime;
-            if (GrabbedObjectScript.isInsideWall)
+            if (GrabbedObjectScript.IsInsideWall)
                 velocityTarget = transform.TransformVector(RestrictMovement(transform.InverseTransformVector(velocityTarget)));
 
             grabbedObjectRigidBody.velocity = Vector3.MoveTowards(grabbedObjectRigidBody.velocity, velocityTarget, maxDistanceDelta);
